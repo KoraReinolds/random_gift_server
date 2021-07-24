@@ -5,6 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "start": "tsc && node dist/app.js",
+    "watch": "npx nodejs-hot-reload entry=./src/app.ts outDir=./dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,6 +24,9 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "axios": "^0.21.1",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "nodejs-hot-reload": "^0.1.2"
   }
 }
