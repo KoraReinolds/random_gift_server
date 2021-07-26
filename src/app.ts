@@ -1,8 +1,10 @@
 import express from 'express'
 import { config } from 'dotenv'
-import axios from './api'
-
 config()
+import axios from './api'
+import cors from 'cors'
+import routes from './router'
+
 const app = express()
 const port = 3000
 const extSecret = process.env.EXT_SECRET
@@ -17,23 +19,13 @@ const getAccessToken = async () => {
 
 getAccessToken()
 
-app.get('/', async (req, res) => {
+app.use(cors({
+  origin: '*',
+}))
 
-  let data = ''
+app.use('/', routes)
 
-  try {
-    data = (await axios.get(
-      `https://api.twitch.tv/helix/chat/emotes/global`
-    )).data
-  } catch (e) {
-    data = e.response.data
-  }
-
-  res.json(data)
-
-})
-
-app.listen(port, (err?) => {
+app.listen(port, (err?) => {``
   if (err) {
     return console.error(err)
   }
