@@ -7,7 +7,7 @@ import routes from './router'
 
 const app = express()
 const port = 3000
-const extSecret = process.env.EXT_SECRET
+const extSecret = process.env.TWITCH_API_SECRET
 const clientId = process.env.CLIENT_ID
 
 const getAccessToken = async () => {
@@ -25,7 +25,7 @@ app.use(cors({
 
 app.use('/', routes)
 
-app.listen(port, (err?) => {``
+app.listen(port, (err?) => {
   if (err) {
     return console.error(err)
   }
