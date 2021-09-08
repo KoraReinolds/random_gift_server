@@ -1,41 +1,29 @@
 import express from 'express'
-import axios from '../api'
-import jsonwebtoken from 'jsonwebtoken'
+import {
+  appOAuth,
+  extractToken,
+  signedAxiosInstance,
+  makeServerToken,
+} from '../api'
 
 const router = express.Router()
+const ownerId = process.env.EXTENSION_CLIENT_ID
 
-function extractToken(token) {
+const errorHandleWrapper = (callback) => function (req, res, next) {
+  callback(req, res, next).catch(e => {
 
-  const prefix = 'Bearer '
-  const secret = Buffer.from(process.env.EXT_SECRET, 'base64')
+    const err = e?.response?.data
 
-  console.log('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Mjc1MDY0MjUsIm9wYXF1ZV91c2VyX2lkIjoiVTUzNjc0NzI3NiIsInJvbGUiOiJicm9hZGNhc3RlciIsInB1YnN1Yl9wZXJtcyI6eyJsaXN0ZW4iOlsiYnJvYWRjYXN0IiwiZ2xvYmFsIl0sInNlbmQiOlsiYnJvYWRjYXN0Il19LCJjaGFubmVsX2lkIjoiNTM2NzQ3Mjc2IiwidXNlcl9pZCI6IjUzNjc0NzI3NiIsImlhdCI6MTYyNzQyMDAyNX0.EcJA1bkxPUogn9sv83Usc8micU_ut75p9DLqyA1Dy_g' === token.substring(prefix.length))
-  return jsonwebtoken.verify(
-    token.substring(prefix.length),
-    secret,
-    { algorithms: ['HS256'] },
-  )
-
-}
-
-const errorHandleWrapper = function(callback) {
-  return function (req, res, next) {
-    callback(req, res, next)
-      .catch(e => {
-
-        const err = e?.response?.data
-
-        if (e.name === 'JsonWebTokenError') next()
-        else if (err?.status) res.status(err.status).send()
-        else {
-          res.json(err || {
-            type: 'error',
-            message: 'Произошла ошибка. Обратитесь к администратору',
-          })
-        }
-        
+    if (e.name === 'JsonWebTokenError') next()
+    else if (err?.status) res.status(err.status).send()
+    else {
+      res.json(err || {
+        type: 'error',
+        message: 'Произошла ошибка. Обратитесь к администратору',
       })
-  }
+    }
+    
+  })
 }
 
 router.use(errorHandleWrapper(async (req, res, next) => {
@@ -61,10 +49,24 @@ router.use(errorHandleWrapper(async (req, res, next) => {
 // private routes
 
 router.get('/chat/globalEmotes', errorHandleWrapper(async (req, res, next) => {
-  res.json((await axios.get(
+  res.json((await appOAuth.get(
     `https://api.twitch.tv/helix/chat/emotes/global`
   )).data)
+}))
+
+// need sign token
+router.use(errorHandleWrapper(async (req, res, next) => {
+
+  signedAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${makeServerToken(req.user)}`
   
+  next()
+
+}))
+
+router.get('/configuration', errorHandleWrapper(async (req, res, next) => {
+  res.json((await signedAxiosInstance.get(
+    `https://api.twitch.tv/extensions/${ownerId}/configurations/channels/${req.user.channel_id}`
+  )).data)
 }))
 
 export default router
