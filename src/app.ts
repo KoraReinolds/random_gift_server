@@ -3,19 +3,25 @@ import { config } from 'dotenv'
 config()
 import cors from 'cors'
 import routes from './router'
+import { createServer } from "http"
+import { Server } from "socket.io"
 
 const app = express()
-const port = 3000
+
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    credentials: true,
+  }
+})
 
 app.use(cors({
   origin: '*',
 }))
 
+app.set('io', io)
+
 app.use('/', routes)
 
-app.listen(port, (err?) => {
-  if (err) {
-    return console.error(err)
-  }
-  return console.log(`server is listening on ${port}`)
-})
+httpServer.listen(3000)

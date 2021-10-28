@@ -13,6 +13,7 @@ const errorHandleWrapper = (callback) => function (req, res, next) {
   callback(req, res, next).catch(e => {
 
     const err = e?.response?.data
+    console.log(err)
 
     if (e.name === 'JsonWebTokenError') next()
     else if (err?.status) res.status(err.status).send()
@@ -41,7 +42,7 @@ router.use(errorHandleWrapper(async (req, res, next) => {
 router.use(errorHandleWrapper(async (req, res, next) => {
 
   if (!req.user) res.status(401).send()
-  
+  console.log(req.user)
   next()
 
 }))
@@ -67,6 +68,11 @@ router.get('/configuration', errorHandleWrapper(async (req, res, next) => {
   res.json((await signedAxiosInstance.get(
     `https://api.twitch.tv/extensions/${ownerId}/configurations/channels/${req.user.channel_id}`
   )).data)
+}))
+
+
+router.post('/bits/transaction', errorHandleWrapper(async (req, res, next) => {
+  req.app.get('io').sockets.emit(req.user.channel_id, 'socket')
 }))
 
 export default router
