@@ -4,6 +4,7 @@ import {
   extractToken,
   signedAxiosInstance,
   makeServerToken,
+  signToken,
 } from '../api'
 
 const router = express.Router()
@@ -13,7 +14,7 @@ const errorHandleWrapper = (callback) => function (req, res, next) {
   callback(req, res, next).catch(e => {
 
     const err = e?.response?.data
-    console.log(err)
+    console.log('err: ', err)
 
     if (e.name === 'JsonWebTokenError') next()
     else if (err?.status) res.status(err.status).send()
@@ -38,6 +39,22 @@ router.use(errorHandleWrapper(async (req, res, next) => {
 }))
 
 // public routes
+
+router.post('/emitWidgetStatus', errorHandleWrapper(async (req, res, next) => {
+  const { active, channelId } = req.body
+  await signedAxiosInstance.post(
+    `https://api.twitch.tv/extensions/message/${channelId}`,
+    {
+      content_type: "application/json",
+      message: `{"active": "${ active }"}`,
+      targets: ["broadcast"]
+    },
+    {
+      headers: { Authorization: `Bearer ${signToken()}` }
+    }
+  )
+  res.json({ status: 'ok' })
+}))
 
 router.use(errorHandleWrapper(async (req, res, next) => {
 
@@ -69,7 +86,6 @@ router.get('/configuration', errorHandleWrapper(async (req, res, next) => {
     `https://api.twitch.tv/extensions/${ownerId}/configurations/channels/${req.user.channel_id}`
   )).data)
 }))
-
 
 router.post('/bits/transaction', errorHandleWrapper(async (req, res, next) => {
   req.app.get('io').sockets.emit(req.user.channel_id, 'socket')

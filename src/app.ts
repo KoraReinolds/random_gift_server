@@ -5,6 +5,8 @@ import cors from 'cors'
 import routes from './router'
 import { createServer } from "http"
 import { Server } from "socket.io"
+import bodyParser from "body-parser"
+
 
 const app = express()
 
@@ -15,6 +17,10 @@ const io = new Server(httpServer, {
     credentials: true,
   }
 })
+
+app.use(bodyParser.urlencoded({ extended: false }))
+
+app.use(bodyParser.json())
 
 app.use(cors({
   origin: '*',

@@ -46,6 +46,20 @@ const getAccessToken = async () => {
   }
 }
 
+const signToken = () => {
+  return jsonwebtoken.sign({
+    exp: +new Date() + 60000,
+    user_id: "536747276",
+    channel_id: "536747276",
+    role: "external",
+    pubsub_perms: {
+      send:[
+        "broadcast"
+      ]
+    },
+  }, secret)
+}
+
 getAccessToken()
 
 export {
@@ -54,5 +68,5 @@ export {
   appOAuth,
   extractToken,
   makeServerToken,
-
+  signToken,
 }
