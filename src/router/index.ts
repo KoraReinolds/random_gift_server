@@ -88,7 +88,31 @@ router.get('/configuration', errorHandleWrapper(async (req, res, next) => {
 }))
 
 router.post('/bits/transaction', errorHandleWrapper(async (req, res, next) => {
-  req.app.get('io').sockets.emit(req.user.channel_id, 'socket')
+  const config = JSON.parse((
+    await signedAxiosInstance.get(
+      `https://api.twitch.tv/extensions/${ownerId}/configurations/channels/${req.user.channel_id}`
+    )
+  ).data?.[`broadcaster:${req.user.channel_id}`].record.content)
+  const product = req.body.product
+  const cost = product.cost.amount
+  const productConfig = config.giftList.find(g => +g.bits === +cost) || {}
+  const randomValue = Math.round(Math.random() * 100)
+  const types: string[] = Object.keys(productConfig?.chances || {})
+  const chances: number[] = Object.values(productConfig?.chances || {})
+  chances.forEach((val, index, map) => {
+    if (index < map.length - 1) map[index + 1] += val
+  })
+  const revardData = { type: '', reward: '' };
+  revardData.type = types[chances.findIndex(chance => randomValue < chance)]
+  const rewardList = productConfig.actions[revardData.type]
+  revardData.reward = rewardList[Math.floor(Math.random() * rewardList.length)] || ''
+  req.app.get('io').sockets.emit(
+    req.user.channel_id,
+    JSON.stringify({
+      ...req.body,
+      ...revardData,
+    })
+  )
 }))
 
 export default router
